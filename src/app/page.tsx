@@ -1,57 +1,40 @@
-'use client'              
+'use client'                       // нужна работа с хуками
 
-import Image from 'next/image'
+import { logout } from '@/lib/auth'
 import useAuthUser from '@/lib/hooks/useAuthUser'
-import { loginWithGoogle, logout } from '@/lib/auth'
+import Link from 'next/link'
 
 export default function Home() {
   const { user, loading } = useAuthUser()
 
-  if (loading) {
+  /** пока не знаем состояние авторизации — ничего не рендерим */
+  if (loading) return null
+
+  /* Если НЕ авторизован — показываем ссылки входа / регистрации */
+  if (!user) {
     return (
-      <main className="flex h-screen items-center justify-center">
-        <p className="animate-pulse">Загружаемся…</p>
+      <main className="grid min-h-screen place-content-center gap-4">
+        <h1 className="text-3xl font-bold">KinoDasha</h1>
+
+        <Link href="/login" className="rounded bg-pink-600 px-5 py-2">
+          Войти
+        </Link>
+        <Link href="/register" className="text-sm text-pink-400 underline">
+          Регистрация
+        </Link>
       </main>
     )
   }
 
+  /* Авторизован — показываем e-mail и кнопку выхода */
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6">
-      <h1 className="text-4xl font-bold">KinoDasha</h1>
+    <main className="grid min-h-screen place-content-center gap-4">
+      <h1 className="text-3xl font-bold">KinoDasha</h1>
+      <p>{user.email}</p>
 
-      {user ? (
-        <>
-          {/* данные пользователя */}
-          <div className="flex items-center gap-3">
-            {user.photoURL && (
-              <Image
-                src={user.photoURL}
-                alt={user.displayName ?? 'avatar'}
-                width={48}
-                height={48}
-                className="rounded-full"
-              />
-            )}
-            <span>{user.displayName ?? user.email}</span>
-          </div>
-
-          {/* выход */}
-          <button
-            onClick={logout}
-            className="rounded bg-rose-600 px-4 py-2 text-white hover:bg-rose-700"
-          >
-            Выйти
-          </button>
-        </>
-      ) : (
-        /* вход */
-        <button
-          onClick={loginWithGoogle}
-          className="rounded bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
-        >
-          Войти через Google
-        </button>
-      )}
+      <button onClick={logout} className="rounded bg-pink-600 px-5 py-2">
+        Выйти
+      </button>
     </main>
   )
 }
