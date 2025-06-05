@@ -1,23 +1,21 @@
-'use client';
+'use client'
 
-import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 
+export async function loginWithGoogle() {
+  const provider = new GoogleAuthProvider()
+  await signInWithPopup(auth, provider)
+}
+
+/** Кнопка «Войти через Google» */
 export default function LoginButton() {
-  const user = auth.currentUser;
-
-  async function handleClick() {
-    if (user) {
-      await signOut(auth);
-    } else {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    }
-  }
-
   return (
-    <button onClick={handleClick} className="px-4 py-2 bg-emerald-600 text-white rounded">
-      {user ? 'Sign out' : 'Sign in with Google'}
+    <button
+      onClick={loginWithGoogle}
+      className="mt-4 w-full rounded bg-sky-600 px-5 py-2 text-white hover:bg-sky-500"
+    >
+      Войти через Google
     </button>
-  );
+  )
 }

@@ -1,11 +1,23 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    /* Базовая папка для всех абсолютных импортов */
+    "baseUrl": ".",
+
+    /* С какими стандартными библиотеками работаем */
     "lib": ["dom", "dom.iterable", "esnext"],
+
+    /* Разрешаем JS в проекте */
     "allowJs": true,
+
+    /* Не проверяем декларации в node_modules */
     "skipLibCheck": true,
+
+    /* Включаем максимальную строгость */
     "strict": true,
+
+    /* Не эмиттим файлы — Next.js сам всё транспилирует */
     "noEmit": true,
+
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
@@ -13,15 +25,36 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+
+    /* Target — ES2017, уже вполне современный */
+    "target": "ES2017",
+
+    /* Плагины для Next.js (TSX-подсказки в .js/.jsx файлах) */
     "plugins": [
       {
         "name": "next"
       }
     ],
+
+    /* Алиасы для удобного импорта */
     "paths": {
-      "@/*": ["./src/*"]
+      /* весь src по @/... */
+      "@/*": ["src/*"],
+
+      /* для компонентов: */
+      "@components/*": ["src/components/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+
+  /* где искать TS/JS/TSX/JSX-файлы */
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "scripts/seed.ts"
+  ],
+
+  /* исключаем node_modules */
   "exclude": ["node_modules"]
 }

@@ -1,0 +1,18 @@
+<!--?xml version="1.0" encoding="UTF-8"?-->
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Нет изображения</title>
+  <desc id="desc">Серый фон и иконка камеры вместо постера фильма</desc>
+  <rect width="400" height="300" fill="#2d2d2d" rx="8" ry="8"></rect>
+  <g transform="translate(200,150) scale(1.2)">
+    <!-- корпус камеры -->
+    <rect x="-60" y="-40" width="120" height="80" fill="#444" rx="4" ry="4"></rect>
+    <!-- объектив -->
+    <circle cx="0" cy="0" r="24" fill="#2d2d2d" stroke="#666" stroke-width="4"></circle>
+    <!-- верхняя «ручка» -->
+    <rect x="-30" y="-60" width="60" height="20" fill="#444" rx="2" ry="2"></rect>
+    <!-- вспышка -->
+    <rect x="40" y="-60" width="10" height="20" fill="#555" rx="2" ry="2"></rect>
+    <!-- штриховая «вспышка» -->
+    <line x1="46" y1="-50" x2="70" y2="-50" stroke="#666" stroke-width="2" stroke-dasharray="4 2"></line>
+  </g>
+</svg>

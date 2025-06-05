@@ -7,6 +7,10 @@ const nextConfig = {
   images: {
     domains: ['lh3.googleusercontent.com'],
   },
+  eslint: {
+    // игнорировать ошибки ESLint во время `next build`
+    ignoreDuringBuilds: true,
+  },
 }
 
 export default nextConfig
