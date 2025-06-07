@@ -49,4 +49,4 @@ ______________________________
 
 ![Авторизация через Google](./public/readme/2.png)
 
-![🎬 Смотреть видео-демонстрацию на Google Диске](https://drive.google.com/file/d/1AI_sqmRN_pVfmTLMAXU9cssIwW_DWre6/view?usp=sharing)
+[🎬 Смотреть видео-демонстрацию на Google Диске](https://drive.google.com/file/d/1AI_sqmRN_pVfmTLMAXU9cssIwW_DWre6/view?usp=sharing)
