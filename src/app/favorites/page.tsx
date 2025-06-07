@@ -9,9 +9,12 @@ import { Skeleton } from '@/components/Skeleton'
 import { toast } from 'react-toastify'
 
 interface Movie {
+  id: string
   title: string
-  poster: string
-  // остальные поля
+  year: string
+  rating: number
+  genre: string[]
+  poster: string   
 }
 
 export default function FavoritesPage() {
@@ -83,7 +86,7 @@ export default function FavoritesPage() {
           {movies.map((m, i) => (
             <Link key={i} href={`/movies/${favIds[i]}`} className="block">
               <img
-                src={m.poster}
+                src={`/posters/${m.poster}`} 
                 alt={m.title}
                 className="w-full h-48 object-cover rounded mb-2"
               />

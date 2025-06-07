@@ -3,10 +3,9 @@
 import { useEffect, useState, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { query, collection, getDocs } from 'firebase/firestore'
-import { ref, getDownloadURL } from 'firebase/storage'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { db, storage } from '@/lib/firebase'
+import { db } from '@/lib/firebase'
 import { Skeleton } from '@/components/Skeleton'
 
 // 1) Выносим MovieCard в отдельный чанковый бандл, отключаем SSR
@@ -21,56 +20,45 @@ interface Movie {
   year: string
   rating: number
   genre: string[]
-  posterUrl: string
+  poster: string   
 }
 
 export default function HomePage() {
-  const [movies, setMovies]       = useState<Movie[]>([])
-  const [loading, setLoading]     = useState(true)
-  const [error, setError]         = useState<string | null>(null)
+  const [movies, setMovies] = useState<Movie[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // поиск / фильтрация / сортировка
-  const [search, setSearch]           = useState('')
+  const [search, setSearch] = useState('')
   const [genreFilter, setGenreFilter] = useState('Все')
-  const [sortDesc, setSortDesc]       = useState(true)
+  const [sortDesc, setSortDesc] = useState(true)
 
-  // 2) Загрузка данных из Firestore + получение URL картинки из Storage
+  // Загрузка данных из Firestore
   useEffect(() => {
     async function fetchMovies() {
       setLoading(true)
       setError(null)
       try {
-        const q    = query(collection(db, 'movies'))
+        const q = query(collection(db, 'movies'))
         const snap = await getDocs(q)
 
-        const arr: Movie[] = await Promise.all(
-          snap.docs.map(async doc => {
-            // расширяем тип, чтобы читать posterPath
-            const data = doc.data() as {
-              title: string
-              year: string
-              rating: number
-              genre: string[]
-              posterPath?: string
-            }
-            let url = '/placeholder.svg'
-            if (data.posterPath) {
-              try {
-                url = await getDownloadURL(ref(storage, data.posterPath))
-              } catch {
-                // если не нашли — оставляем плейсхолдер
-              }
-            }
-            return {
-              id:        doc.id,
-              title:     data.title,
-              year:      data.year,
-              rating:    data.rating,
-              genre:     data.genre,
-              posterUrl: url,
-            }
-          })
-        )
+        const arr: Movie[] = snap.docs.map(doc => {
+          const data = doc.data() as {
+            title: string
+            year: string
+            rating: number
+            genre: string[]
+            poster: string // ← должно быть в базе, например 'krestniotez.jpg'
+          }
+          return {
+            id: doc.id,
+            title: data.title,
+            year: data.year,
+            rating: data.rating,
+            genre: data.genre,
+            poster: data.poster // ← тут имя файла постера
+          }
+        })
 
         setMovies(arr)
         if (!toast.isActive('load-movies')) {
@@ -116,7 +104,7 @@ export default function HomePage() {
 
   return (
     <>
-      {/* единственный ToastContainer на страницу */}
+      {/* ToastContainer для уведомлений */}
       <ToastContainer
         position="bottom-right"
         autoClose={3000}

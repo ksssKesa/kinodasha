@@ -21,10 +21,15 @@ export default function MoviesPage() {
     async function load() {
       try {
         const snap = await getDocs(collection(db, 'movies'))
-        const data = snap.docs.map(doc => ({
-          id: doc.id,
-          ...(doc.data() as Omit<Movie, 'id'>),
-        }))
+        const data = snap.docs.map(doc => {
+          const d = doc.data() as Omit<Movie, 'id'>
+          // Если poster нет — подставляем плейсхолдер
+          return {
+            id: doc.id,
+            ...d,
+            poster: d.poster || 'placeholder.svg', // <-- добавь свой placeholder, если нужен
+          }
+        })
         setMovies(data)
       } catch (err) {
         console.error('Ошибка при загрузке фильмов', err)
@@ -52,7 +57,7 @@ export default function MoviesPage() {
           className="block border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
         >
           <img
-            src={movie.poster}
+            src={`/posters/${movie.poster}`}
             alt={movie.title}
             className="w-full h-48 object-cover"
           />

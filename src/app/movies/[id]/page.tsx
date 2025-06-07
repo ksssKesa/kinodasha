@@ -1,125 +1,158 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import {
-  doc, getDoc, updateDoc,
-  arrayUnion, arrayRemove
-} from 'firebase/firestore'
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, setDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { useAuthUser } from '@/hooks/useAuthUser'
-import { Skeleton } from '@/components/Skeleton'
 import { toast } from 'react-toastify'
 
 interface Movie {
+  id: string
   title: string
   year: string
   rating: number
   genre: string[]
   poster: string
-  description?: string
+  embedUrl: string
 }
 
-export default function MovieDetailPage() {
-  const { id: movieId } = useParams<{ id: string }>()
+export default function MoviePage() {
+  const params = useParams()
   const router = useRouter()
-  const { user, loading: authLoading } = useAuthUser()
-
+  const { user } = useAuthUser()
   const [movie, setMovie] = useState<Movie | null>(null)
-  const [isFav, setIsFav] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [fav, setFav] = useState(false)
+  const [favLoading, setFavLoading] = useState(false)
 
-  // 1) Загрузка данных фильма
+  // Загружаем фильм
   useEffect(() => {
-    if (!movieId) return
-    setLoading(true)
-    getDoc(doc(db, 'movies', movieId))
-      .then(snap => {
-        if (!snap.exists()) throw new Error('Фильм не найден')
-        setMovie(snap.data() as Movie)
-      })
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [movieId])
+    const load = async () => {
+      setLoading(true)
+      try {
+        const snap = await getDoc(doc(db, 'movies', params.id as string))
+        if (snap.exists()) {
+          const data = snap.data() as Omit<Movie, 'id'>
+          setMovie({ id: params.id as string, ...data })
+        } else {
+          setError('Фильм не найден')
+        }
+      } catch (e) {
+        setError('Ошибка загрузки фильма')
+      }
+      setLoading(false)
+    }
+    load()
+  }, [params.id])
 
-  // 2) Проверяем избранное
+  // Проверяем избранное
   useEffect(() => {
-    if (!user || !movieId) return
-    getDoc(doc(db, 'users', user.uid))
-      .then(snap => {
-        const data = snap.data() as { favorites?: string[] }
-        setIsFav(Array.isArray(data?.favorites) && data.favorites.includes(movieId))
-      })
-      .catch(() => {/* игнорируем */})
-  }, [user, movieId])
+    if (!user) {
+      setFav(false)
+      return
+    }
+    const check = async () => {
+      const userSnap = await getDoc(doc(db, 'users', user.uid))
+      const data = userSnap.data() as { favorites?: string[] }
+      setFav(data?.favorites?.includes(params.id as string) ?? false)
+    }
+    check()
+  }, [user, params.id])
 
-  // 3) Переключаем избранное
-  async function toggleFavorite() {
-    if (!user || !movieId) return
+  // Функция добавления/удаления из избранного
+  async function handleFavClick() {
+    if (!user) {
+      toast.info('Авторизуйтесь для добавления в избранное')
+      return
+    }
+    setFavLoading(true)
     const userRef = doc(db, 'users', user.uid)
     try {
-      await updateDoc(userRef, {
-        favorites: isFav ? arrayRemove(movieId) : arrayUnion(movieId)
-      })
-      setIsFav(!isFav)
-      toast.success(isFav ? 'Удалено из избранного' : 'Добавлено в избранное')
-    } catch (e: any) {
-      toast.error('Ошибка при обновлении избранного: ' + e.message)
+      const snap = await getDoc(userRef)
+      if (!snap.exists()) {
+        // Если документа пользователя нет — создаём
+        await setDoc(userRef, { favorites: [params.id] }, { merge: true })
+        setFav(true)
+        toast.success('Добавлено в избранное')
+      } else {
+        const data = snap.data() as { favorites?: string[] }
+        if (data?.favorites?.includes(params.id as string)) {
+          await updateDoc(userRef, { favorites: arrayRemove(params.id) })
+          setFav(false)
+          toast.info('Удалено из избранного')
+        } else {
+          await updateDoc(userRef, { favorites: arrayUnion(params.id) })
+          setFav(true)
+          toast.success('Добавлено в избранное')
+        }
+      }
+    } catch (e) {
+      toast.error('Ошибка при изменении избранного')
     }
+    setFavLoading(false)
   }
 
-  if (authLoading || loading) {
-    // скелетон вместо сплошного "Загрузка..."
-    return (
-      <main className="p-4 bg-black text-white min-h-screen space-y-4">
-        <Skeleton className="h-8 w-2/3" />       {/* заголовок */}
-        <Skeleton className="h-64 w-full max-w-md" /> {/* постер */}
-        <Skeleton className="h-4 w-1/2" />       {/* рейтинг */}
-        <Skeleton className="h-4 w-1/3" />       {/* жанры */}
-        <Skeleton className="h-4 w-full" />     {/* описание */}
-        <div className="flex gap-4">
-          <Skeleton className="h-10 w-32" />    {/* кнопка */}
-          <Skeleton className="h-10 w-32" />
-        </div>
-      </main>
-    )
-  }
-
-  if (error) {
-    return <p className="p-4 text-red-500">Ошибка: {error}</p>
-  }
-  if (!movie) {
-    return <p className="p-4">Фильм не найден</p>
-  }
+  if (loading) return <main className="p-6 text-white">Загрузка…</main>
+  if (error || !movie) return <main className="p-6 text-red-500">{error || 'Нет данных'}</main>
 
   return (
-    <main className="p-4 bg-black text-white min-h-screen">
-      <h1 className="text-3xl mb-4">{movie.title} ({movie.year})</h1>
-      <img
-        src={movie.poster}
-        alt={movie.title}
-        className="w-full max-w-md mb-4 object-cover rounded"
-      />
-      <p className="mb-2">Рейтинг: {movie.rating}</p>
-      <p className="mb-2">Жанры: {movie.genre.join(', ')}</p>
-      {movie.description && <p className="mb-4">{movie.description}</p>}
+    <main className="p-6 bg-black text-white min-h-screen">
+      <div className="flex flex-col md:flex-row items-start gap-8 mb-8">
+        <img
+          src={`/posters/${movie.poster}`}
+          alt={movie.title}
+          className="rounded-lg shadow-lg w-[220px] h-[330px] object-cover mx-auto md:mx-0"
+        />
+        <div className="flex-1 flex flex-col justify-between gap-4">
+          <h1 className="text-3xl font-bold mb-2">
+            {movie.title} <span className="text-gray-400">({movie.year})</span>
+          </h1>
+          <div className="text-xl mb-2">
+            <span className="text-yellow-400">★</span> Рейтинг: {movie.rating}
+          </div>
+          <div className="text-lg mb-4">
+            Жанры: <span className="text-gray-200">{movie.genre.join(', ')}</span>
+          </div>
+          <div className="flex gap-4">
+            <button
+              onClick={handleFavClick}
+              disabled={favLoading}
+              className={`px-5 py-2 rounded font-bold transition ${
+                fav
+                  ? 'bg-pink-600 hover:bg-pink-700'
+                  : 'bg-blue-700 hover:bg-blue-800'
+              }`}
+            >
+              {fav ? 'Добавлено в 🤍' : 'В избранное 🤍'}
+            </button>
+            <button
+              onClick={() => router.push('/')}
+              className="bg-gray-700 hover:bg-gray-600 px-5 py-2 rounded font-bold transition"
+            >
+              ← На главную
+            </button>
+          </div>
+        </div>
+      </div>
 
-      <div className="flex items-center gap-4">
-        <button
-          onClick={toggleFavorite}
-          className={`px-4 py-2 rounded transition-colors ${
-            isFav ? 'bg-red-600 hover:bg-red-700' : 'bg-pink-600 hover:bg-pink-700'
-          }`}
-        >
-          {isFav ? 'Убрать из избранного' : 'В избранное'}
-        </button>
-        <button
-          onClick={() => router.push('/')}
-          className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-700"
-        >
-          ← На главную
-        </button>
+      {/* Видео ниже шапки */}
+      <div className="flex justify-center">
+        {movie.embedUrl ? (
+          <iframe
+            src={movie.embedUrl}
+            title={movie.title}
+            width="900"
+            height="506"
+            allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+            allowFullScreen
+            frameBorder={0}
+            className="rounded-xl bg-black shadow-xl w-full max-w-[900px] aspect-video"
+          />
+        ) : (
+          <div className="text-center text-gray-400 p-12">Видео недоступно</div>
+        )}
       </div>
     </main>
   )

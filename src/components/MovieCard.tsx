@@ -9,7 +9,7 @@ interface MovieCardProps {
     year: string
     rating: number
     genre: string[]
-    posterUrl: string
+    poster: string;
   }
 }
 
@@ -25,12 +25,12 @@ export default function MovieCard({ movie }: MovieCardProps) {
       className="block bg-[#1e293b] rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
     >
       {/* Отступ-padding-bottom 56.25% (= 9/16), чтобы сохранить aspect-ratio */}
-      <div className="relative pb-[56.25%] bg-gray-800">
-        <img
-          src={movie.posterUrl}
+      <div className="relative aspect-[2/3] bg-gray-800 mb-2">
+        <img 
+          src={`/posters/${movie.poster}`}
           alt={movie.title}
-          loading="lazy"              // <-- lazy-loading
-          className="absolute inset-0 w-full h-full object-cover"
+          loading="lazy" 
+          className="absolute inset-0 w-full h-full object-cover rounded"
         />
       </div>
 
